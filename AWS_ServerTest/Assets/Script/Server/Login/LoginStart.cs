@@ -13,23 +13,59 @@ namespace Game
             //ユーザー情報
             [SerializeField]
             private Data.UserLogin userLoginData_;
+            public Data.UserLogin UserLoginData
+            {
+                set { userLoginData_ = value; }
+            }
+            //Debug変数
+            [SerializeField]
+            private bool saveDataDelete_ = false;
 
+            //LoginDataクラス
+            [SerializeField]
+            private BeginLoginData loginData_;
             // Start is called before the first frame update
             void Start()
             {
+                //データがあるかどうか
+                if (PlayerPrefs.HasKey(Data.SaveDataName.const_UserData))
+                {
+
+                    //ローカルに保存してあるユーザー情報をもとにサーバーとの通信開始
+                    StartCoroutine(Access());
+
+                    //Debug
+                    if (saveDataDelete_) PlayerPrefs.DeleteAll();
+                    //
+                }
+                else
+                {
+                    //なかった場合は、新規に登録
+                    NewUserData();
+                }
+            }
+
+            //サーバースタート
+            public void ServerStart()
+            {
                 //Debug
-                DebugInit();
+                // DebugInit();
                 //
 
                 //データがあるかどうか
                 if (PlayerPrefs.HasKey(Data.SaveDataName.const_UserData))
-                { 
+                {
 
                     //保存されているデータをJSON変換し、変数に格納
-                   userLoginData_ =  JsonUtility.FromJson<Data.UserLogin>( PlayerPrefs.GetString(Data.SaveDataName.const_UserData));
+                    // userLoginData_ =  JsonUtility.FromJson<Data.UserLogin>( PlayerPrefs.GetString(
+                    //                   Data.SaveDataName.const_UserData));
 
                     //ローカルに保存してあるユーザー情報をもとにサーバーとの通信開始
                     StartCoroutine(Access());
+
+                    //Debug
+                    if (saveDataDelete_) PlayerPrefs.DeleteAll();
+                    //
                 }
                 else
                 {
@@ -81,12 +117,16 @@ namespace Game
             private void NewUserData()
             {
                 PlayerPrefs.SetString(Data.SaveDataName.const_UserData, JsonUtility.ToJson(userLoginData_));
+
+                loginData_ = new NewLoginData(ref userLoginData_);
+                StartCoroutine(loginData_.LoginAccess());
+                Object.Destroy(loginData_);
             }
 
             //DebugInit
             private void DebugInit()
             {
-                userLoginData_.userID_ = 0;
+                userLoginData_.userID_ = 1;
                 userLoginData_.userPass_ = "chigasyou";
             }
 
